@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Streakfolio — 28-Day UI/UX Challenge</title>
+<meta name="description" content="28 days of real UI/UX design tasks. Build your portfolio, one screen at a time."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',sans-serif;background:#fafafa;color:#0a0a0a;min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{--accent:#6C63FF;--accent-light:#f0efff}
+
+/* ── Confetti ── */
+@keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(700px) rotate(720deg);opacity:0}}
+.confetti-piece{position:fixed;top:0;animation:confetti-fall linear forwards;z-index:9999;pointer-events:none}
+
+/* ── Toast ── */
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-100%);opacity:0}}
+.toast{position:fixed;top:0;left:0;right:0;z-index:1000;background:#0a0a0a;color:#fff;padding:14px 20px;font-size:14px;font-weight:600;text-align:center;animation:slideDown 0.3s ease;line-height:1.6;font-family:'Manrope',sans-serif}
+.toast.hiding{animation:slideUp 0.3s ease forwards}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #f0f0f0;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.nav-logo span{color:var(--accent)}
+.streak-badge{display:flex;align-items:center;gap:5px;background:#f3f3f3;border-radius:20px;padding:6px 12px;font-size:13px;font-weight:700}
+
+/* ── Screens ── */
+.screen{display:none}.screen.active{display:block}
+
+/* ── Onboarding ── */
+.onboard{position:fixed;inset:0;background:#fff;z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.onboard-logo{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:32px}
+.onboard-logo span{color:var(--accent)}
+.onboard-heading{font-size:34px;font-weight:800;letter-spacing:-1.2px;line-height:1.2;margin-bottom:12px}
+.onboard-sub{font-size:15px;color:#888;line-height:1.6;max-width:300px;margin-bottom:14px}
+.onboard-warning{background:var(--accent-light);border-radius:14px;padding:13px 16px;font-size:13px;color:var(--accent);font-weight:600;margin-bottom:36px;max-width:300px;line-height:1.6}
+.onboard-btn{background:#0a0a0a;color:#fff;border:none;border-radius:16px;padding:16px 32px;font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;cursor:pointer;width:100%;max-width:300px;transition:background 0.2s}
+.onboard-btn:hover{background:#222}
+
+/* ── Home ── */
+.home-wrap{max-width:480px;margin:0 auto;padding:20px 16px 100px}
+.progress-card{background:#fff;border-radius:20px;border:1px solid #f0f0f0;padding:20px;margin-bottom:20px}
+.progress-card-label{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.progress-count{font-size:30px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.progress-count span{color:#ddd}
+.progress-bar-wrap{background:#f3f3f3;border-radius:99px;height:6px;margin-bottom:8px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width 0.5s ease}
+.level-label{font-size:12px;font-weight:700;color:var(--accent)}
+.week-tabs{display:flex;gap:4px;margin-bottom:20px;background:#f3f3f3;border-radius:14px;padding:4px}
+.week-tab{flex:1;border:none;background:transparent;border-radius:11px;padding:8px 4px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:#aaa;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.week-tab.active{background:#fff;color:#0a0a0a;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.week-tab.locked{cursor:not-allowed;opacity:0.5}
+.section-label{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day-card{aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid transparent;font-family:'Manrope',sans-serif;gap:2px;padding:4px;transition:transform 0.1s}
+.day-card:active{transform:scale(0.93)}
+.day-card.completed{background:#0a0a0a;border-color:#0a0a0a;color:#fff}
+.day-card.active-day{background:#fff;border-color:var(--accent);color:#0a0a0a;box-shadow:0 0 0 3px var(--accent-light)}
+.day-card.waiting{background:var(--accent-light);border-color:rgba(108,99,255,0.25);color:var(--accent);cursor:default}
+.day-card.locked{background:#f5f5f5;color:#ccc;cursor:not-allowed;border-color:transparent}
+.day-num{font-size:14px;font-weight:800;line-height:1}
+.day-timer{font-size:7.5px;font-weight:700;line-height:1;text-align:center;padding:0 1px}
+
+/* ── Task Detail ── */
+.task-wrap{max-width:480px;margin:0 auto;padding:0 0 120px}
+.task-header{padding:20px 16px 0}
+.back-btn{background:none;border:none;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;color:#aaa;cursor:pointer;padding:0;margin-bottom:16px;display:flex;align-items:center;gap:6px;transition:color 0.15s}
+.back-btn:hover{color:#0a0a0a}
+.day-badge{display:inline-flex;background:#f3f3f3;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;color:#666;margin-bottom:12px;letter-spacing:0.3px}
+.task-title{font-size:26px;font-weight:800;letter-spacing:-0.8px;line-height:1.2;margin-bottom:8px}
+.task-brief{font-size:14px;color:#888;line-height:1.6;margin-bottom:16px}
+.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.3px}
+.tag-mobile{background:#e8f4ff;color:#1a6fa8}
+.tag-web{background:#e8f7ee;color:#1a7a3c}
+.tag-Beginner{background:#f0f9e8;color:#3d7a1a}
+.tag-Intermediate{background:#fff4e0;color:#8a5500}
+.tag-Advanced{background:#ffe8f0;color:#8a1a4a}
+.tag-Expert{background:#f0e8ff;color:#5a1a8a}
+.task-section{padding:0 16px;margin-bottom:24px}
+.task-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#aaa;margin-bottom:12px}
+.req-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.req-item{display:flex;gap:10px;align-items:flex-start}
+.req-num{min-width:22px;height:22px;border-radius:6px;background:#0a0a0a;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.req-text{font-size:13px;line-height:1.65;color:#555}
+.tool-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tool-chip{background:#f3f3f3;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:#555}
+.ref-link{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none}
+.ref-link:hover{text-decoration:underline}
+
+/* ── Portfolio card ── */
+.portfolio-card{background:var(--accent-light);border-radius:16px;border:1px solid rgba(108,99,255,0.18);padding:16px;margin:0 16px 16px}
+.portfolio-card-title{font-size:13px;font-weight:700;color:#0a0a0a;margin-bottom:10px}
+.portfolio-btns{display:flex;gap:8px}
+.portfolio-btn{flex:1;border:1.5px solid #e8e8e8;background:#fff;border-radius:10px;padding:10px 8px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center;color:#0a0a0a;text-decoration:none;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s,color 0.15s}
+.portfolio-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Timer card ── */
+.timer-card{background:var(--accent-light);border-radius:14px;border:1px solid rgba(108,99,255,0.15);padding:14px 16px;margin:0 16px 16px;display:flex;align-items:center;gap:12px}
+.timer-text{font-size:13px;font-weight:600;color:var(--accent)}
+.timer-count{font-size:12px;font-weight:700;color:var(--accent);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* ── Bottom bar ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f0f0f0;padding:12px 16px;z-index:50}
+.complete-btn{width:100%;max-width:480px;margin:0 auto;display:block;background:#0a0a0a;color:#fff;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:background 0.2s,transform 0.1s;letter-spacing:-0.2px}
+.complete-btn:hover{background:#222}
+.complete-btn:active{transform:scale(0.98)}
+.complete-btn.done{background:#f3f3f3;color:#aaa;cursor:default}
+.complete-btn.done:hover{background:#f3f3f3;transform:none}
+.waiting-btn{width:100%;max-width:480px;margin:0 auto;display:block;background:var(--accent-light);color:var(--accent);border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;text-align:center}
+
+/* ── Celebration ── */
+.celebration{position:fixed;inset:0;background:#fff;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;overflow:hidden}
+.cel-heading{font-size:48px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:12px}
+.cel-sub{font-size:15px;color:#888;line-height:1.7;max-width:300px;margin-bottom:40px}
+.cel-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;margin-bottom:28px}
+.cel-btn-black{background:#0a0a0a;color:#fff;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.cel-btn-gray{background:#f3f3f3;color:#0a0a0a;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.share-box{width:100%;max-width:300px;background:#f8f8f8;border-radius:16px;padding:16px;border:1px solid #f0f0f0}
+.share-label{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.share-text{font-size:12px;color:#888;line-height:1.6;font-style:italic;margin-bottom:12px}
+.share-btn{background:#0a0a0a;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div class="onboard" id="onboard">
+  <div class="onboard-logo">Streak<span>folio</span></div>
+  <div class="onboard-heading">28 days.<br>Become a designer.</div>
+  <p class="onboard-sub">One UI/UX task per day. Real challenges. Real portfolio work. From a login screen to a full SaaS dashboard.</p>
+  <div class="onboard-warning">⏱ Each day unlocks 24 hours after completing the previous one. No skipping — that's the point.</div>
+  <button class="onboard-btn" onclick="startJourney()">Start Day 1 →</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo">Streak<span>folio</span></div>
+    <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
+  </nav>
+
+  <!-- HOME SCREEN -->
+  <div id="home-screen">
+    <div class="home-wrap">
+      <div class="progress-card">
+        <div class="progress-card-label">Your progress</div>
+        <div class="progress-count"><span id="days-done">0</span> <span>/ 28 days</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="level-label" id="level-label">Week 1 — Single Screens</div>
+      </div>
+
+      <div class="week-tabs" id="week-tabs"></div>
+      <div class="section-label" id="week-range-label">Days 1–7</div>
+      <div class="day-grid" id="day-grid"></div>
+    </div>
+  </div>
+
+  <!-- TASK SCREEN -->
+  <div id="task-screen" style="display:none">
+    <div class="task-wrap">
+      <div class="task-header">
+        <button class="back-btn" onclick="showHome()">← Back</button>
+        <div class="day-badge" id="task-day-badge">Day 1 of 28</div>
+        <div class="task-title" id="task-title"></div>
+        <div class="task-brief" id="task-brief"></div>
+        <div class="tag-row" id="task-tags"></div>
+      </div>
+      <div class="task-section">
+        <div class="task-section-label">Requirements</div>
+        <ul class="req-list" id="req-list"></ul>
+      </div>
+      <div class="task-section">
+        <div class="task-section-label">Tools</div>
+        <div class="tool-chips" id="tool-chips"></div>
+      </div>
+      <div class="task-section">
+        <div class="task-section-label">Reference</div>
+        <a class="ref-link" id="ref-link" target="_blank" rel="noreferrer">Browse examples ↗</a>
+      </div>
+      <div id="portfolio-card" style="display:none" class="portfolio-card">
+        <div class="portfolio-card-title">📤 Upload this to your portfolio</div>
+        <div class="portfolio-btns">
+          <a href="https://dribbble.com/shots/new" target="_blank" rel="noreferrer" class="portfolio-btn">Dribbble ↗</a>
+          <a href="https://www.behance.net/gallery/add" target="_blank" rel="noreferrer" class="portfolio-btn">Behance ↗</a>
+        </div>
+      </div>
+      <div id="timer-card" style="display:none" class="timer-card">
+        <span style="font-size:22px">⏱</span>
+        <div>
+          <div class="timer-text">Next task unlocks in</div>
+          <div class="timer-count" id="task-timer-count">--</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="complete-btn" id="complete-btn" onclick="completeCurrentDay()">Mark as complete ✓</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- CELEBRATION -->
+<div class="celebration" id="celebration" style="display:none">
+  <div style="font-size:60px;margin-bottom:20px">🏆</div>
+  <div class="cel-heading">28 days.<br>Done.</div>
+  <div class="cel-sub">You went from one login screen to a full SaaS dashboard.<br><strong style="color:#0a0a0a">That's a designer.</strong></div>
+  <div class="cel-btns">
+    <a href="https://dribbble.com/shots/new" target="_blank" rel="noreferrer" class="cel-btn-black">Post to Dribbble ↗</a>
+    <a href="https://www.behance.net/gallery/add" target="_blank" rel="noreferrer" class="cel-btn-gray">Post to Behance ↗</a>
+  </div>
+  <div class="share-box">
+    <div class="share-label">Share your journey</div>
+    <div class="share-text">"Just finished the #Craft28 challenge — 28 days of real UI/UX design tasks from a login screen to a full SaaS dashboard."</div>
+    <button class="share-btn" onclick="shareOnTwitter()">Share on X / Twitter →</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const TASKS=[{day:1,title:"Sign-in screen",brief:"One screen. One job. Make logging in feel effortless.",type:"mobile",difficulty:"Beginner",requirements:["Design a full sign-in screen for a meditation app — email, password, CTA button, forgot password link","Show the keyboard-up state: how does the screen shift when the keyboard appears?","Design the error state: wrong password — where does the error message appear and what does it say?","Add a 'Continue with Google' option — handle the visual hierarchy so it doesn't compete with the main CTA","Make the screen feel calm and inviting, not clinical — your font, spacing, and background all carry this","Deliver the screen at 390×844 (iPhone 14 frame)"],tools:["Figma","SF Pro font","Unsplash"],reference:"https://mobbin.com/browse/ios/screens"},{day:2,title:"User profile screen",brief:"A person's identity in one screen. Hierarchy, readability, actions.",type:"mobile",difficulty:"Beginner",requirements:["Design a profile screen for a fitness app — avatar, name, bio, stats row (workouts, followers, following)","The stats row is the key design problem — make 3 numbers scannable in under 1 second","Add an edit profile button and a follow button — these two CTAs need different visual weights","Show the screen for both your own profile (edit) and someone else's (follow)","Include a grid of recent workout cards below the fold — just enough to show the pattern","Handle a long bio gracefully — what happens at 3 lines? Does it truncate?"],tools:["Figma","Unsplash for avatar","Iconify"],reference:"https://mobbin.com/browse/ios/screens"},{day:3,title:"Food delivery home",brief:"Browsing should feel fast and hungry. Design the feed, not just the wrapper.",type:"mobile",difficulty:"Beginner",requirements:["Design the home screen of a food delivery app — location header, search bar, category chips, restaurant cards","Category chips: at least 6 (Pizza, Sushi, Burgers…) — show active/inactive states and horizontal scroll indicator","Restaurant card: photo, name, rating, delivery time, minimum order — all must fit without feeling dense","Design 2 card sizes: featured (full-width) and regular (half-width grid) — show both in the same feed","Show the promo banner slot — one full-width banner with a clear CTA","Deliver at 390px mobile — the card grid must feel right at this width"],tools:["Figma","Unsplash","Zomato/Swiggy as reference"],reference:"https://mobbin.com/apps/swiggy-ios-0e4b2a3f-86ae-4ef8-9e74-a2a8ff2029ca/screens"},{day:4,title:"Onboarding step screen",brief:"One screen has to make someone want to continue. No second chances.",type:"mobile",difficulty:"Beginner",requirements:["Design screen 2 of 4 in an onboarding flow for a budgeting app — this step asks: 'What's your main goal?'","Give the user 4 selectable goal cards (Save for a trip, Build an emergency fund, Pay off debt, Invest more)","Design the unselected, hovered, and selected states for the goal cards — selection must feel satisfying","Show the progress indicator at the top — 4 steps, step 2 active","CTA button should only feel fully active when at least one option is selected — show both states","The illustration or icon area above the question must feel purposeful, not decorative"],tools:["Figma","unDraw.co","Blush.design"],reference:"https://mobbin.com/browse/ios/screens"},{day:5,title:"Music player screen",brief:"Music players are pure visual design. Hierarchy, art, controls.",type:"mobile",difficulty:"Beginner",requirements:["Design a now-playing screen — album art (large, dominant), song title, artist, progress bar","The album art sets the mood — design it so the UI adapts to the art's color palette (show 2 color variations)","Progress bar: current time left, total duration, scrubber thumb — all must be touch-friendly (44px min target)","Controls row: previous, play/pause (larger), next, shuffle, repeat — spacing and sizing matter enormously here","Heart/save and add-to-playlist actions — where do they live without cluttering the controls?","Show the mini-player at the bottom (for when user navigates away) — same song info, play/pause only"],tools:["Figma","Unsplash for album art","Spotify/Apple Music as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:6,title:"E-commerce product page",brief:"This screen either sells the product or doesn't. Every detail counts.",type:"mobile",difficulty:"Intermediate",requirements:["Design a product detail page for a sneaker — full-bleed hero image, name, price, size selector, add to cart","Size selector: show all sizes (6 through 13), out-of-stock sizes visually different — and not just greyed-out","Image gallery: 4 thumbnails below the hero — active state, and a swipe indicator","Price with a sale price: show original strikethrough + discount percentage badge","Add to cart button: default, loading (spinner inside button), and success states","Sticky bottom bar on scroll: just the price + button — show this variant too"],tools:["Figma","Unsplash for product","Nike/SNKRS app as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:7,title:"Expense tracker dashboard",brief:"Numbers need to be understood at a glance, even on a small screen.",type:"mobile",difficulty:"Intermediate",requirements:["Design the home screen of an expense tracker app — monthly spend summary, category breakdown, recent transactions","The spend summary must be the hero — one big number (total spent), progress toward budget","Category breakdown: 5 categories (Food, Transport, Shopping, Bills, Fun) — use a donut chart or bar segments","Recent transactions list: merchant name, category icon, amount, date — 5 transactions visible","Quick-add FAB (floating action button) — position and size it so it doesn't cover the last list item","Filter by week/month/year — show the tab switcher and how data changes between states"],tools:["Figma","Wallet/Money apps as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:8,title:"4-screen habit tracker app",brief:"Design a complete small product. 4 screens that tell a coherent story.",type:"mobile",difficulty:"Intermediate",requirements:["Screen 1 — Home: today's habits list, completion ring or progress bar, streak counter","Screen 2 — Add habit: name, icon picker, frequency (daily/weekly/specific days), reminder toggle","Screen 3 — Habit detail: 30-day calendar heatmap showing completion history, current streak, best streak","Screen 4 — Stats: weekly bar chart of completions, most consistent habit, worst habit, total completions","Navigation: bottom tab bar linking all 4 screens — consistent across every screen","The visual language must feel like one product — same card style, same type scale, same icon set throughout"],tools:["Figma","Streaks/Habitica as reference","SF Symbols for icons"],reference:"https://mobbin.com/browse/ios/apps"},{day:9,title:"Messaging chat thread",brief:"Chat UI has solved patterns. Your job is to make them feel fresh and yours.",type:"mobile",difficulty:"Intermediate",requirements:["Design a full chat thread screen — message bubbles (sent/received), timestamps, avatar for received messages","Consecutive messages from same sender: no repeated avatar, tighter vertical spacing — show this rule applied","Message types in the thread: text, image, a short voice note (waveform + duration), a link preview card","Input bar: text input, emoji button, attach button, send button — send button only activates when text exists","The 'is typing' indicator — three dots — where does it appear and how much space does it take?","Reply-to-message state: when replying to a specific message, show the quoted preview above the input bar"],tools:["Figma","WhatsApp/iMessage as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:10,title:"Travel flight search",brief:"Search results are information design. Lots of data, very little space.",type:"mobile",difficulty:"Intermediate",requirements:["Design the flight search results screen — filter bar at top, list of flight result cards below","Flight card: airline logo, departure/arrival times, duration, stops (nonstop or 1 stop), price — all critical info","Filter bar: sort by (price/duration/stops), filter by airline — show the active filter state with a count badge","Show a 'Best value' label on one card — make it feel editorial, not like an ad banner","Cheapest vs fastest: show how two cards would be highlighted differently for these two 'best' criteria","Empty state: no flights found for this date — with a suggestion to try adjacent dates"],tools:["Figma","Google Flights/MakeMyTrip as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:11,title:"App settings screen",brief:"Settings reveal how much you respect the user's time and intelligence.",type:"mobile",difficulty:"Intermediate",requirements:["Design a full settings screen for a social app — grouped into: Account, Privacy, Notifications, Appearance, About","Each group is a card section with a section label above it — show proper visual grouping","Use the right control for each setting type: toggle for on/off, chevron for deeper pages, radio for exclusive choices","Account section top: large avatar, display name, username, edit button — this is the hero of the page","Notification settings sub-page: design this too — granular per-type toggles (likes, comments, follows, DMs)","Danger zone at the bottom: 'Delete account' as a destructive red text link, not a prominent button"],tools:["Figma","iOS Settings, Twitter/X settings as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:12,title:"SaaS landing page mobile",brief:"The first screen has to earn the second screen. No second chances.",type:"web",difficulty:"Intermediate",requirements:["Design a mobile landing page for a SaaS invoicing tool — hero section, 3 feature highlights, CTA","Hero: headline (max 6 words), subheadline (max 18 words), one primary CTA, one product screenshot at an angle","Feature highlights: 3 cards — icon, short title, one-line description. Not bullet lists. Cards.","Social proof strip: logos of 5 companies (placeholder shapes/names) — make it feel real","Pricing teaser: two plans (Free / Pro), key features listed, one clearly highlighted as recommended","Footer: just the essentials — logo, 4 links, copyright — nothing more"],tools:["Figma","Vercel/Linear landing pages as reference","Unsplash"],reference:"https://land-book.com"},{day:13,title:"Web navigation — 3 states",brief:"Navigation is the spine of a web product. Design all its states.",type:"web",difficulty:"Intermediate",requirements:["Design a top navigation bar for a project management web app — logo, 5 nav items, search, notifications, avatar","Default state: clean, minimal — all items equal weight except one active item","Scroll state: nav shrinks slightly (less padding), gets a subtle bottom border to separate from content","Mobile hamburger menu: full design of the open mobile nav — overlay drawer or full-screen — make a clear choice","Dropdown state: one nav item with a mega-dropdown (3 columns, 9 sub-items with icons)","Notification badge: show the bell with 3 unread — badge design and the notification dropdown panel"],tools:["Figma","Linear/Notion/Vercel nav as reference"],reference:"https://land-book.com"},{day:14,title:"Web dashboard home",brief:"The dashboard is the product. It answers: what do I do next?",type:"web",difficulty:"Advanced",requirements:["Design a full-width web dashboard (1440px) for a project management app — sidebar, top bar, main content area","Sidebar: logo, nav items with icons, active state, collapsed state (icons only at 60px wide)","Top bar: page title, search, notifications, user avatar — minimal and purposeful","Main area: 4 KPI stat cards (Tasks due, Completed, In progress, Overdue) — make the numbers the star","Recent activity feed: 5 items — who did what, on which project, when — each item scannable in 2 seconds","Quick-create button: prominent enough to find but not so loud it competes with the data"],tools:["Figma","Linear/Asana/Notion as reference","Untitled UI for component inspiration"],reference:"https://dribbble.com/tags/project-management-dashboard"},{day:15,title:"Mobile checkout — 3 steps",brief:"Every extra tap in checkout loses money. Design it tight.",type:"mobile",difficulty:"Advanced",requirements:["Design a 3-step mobile checkout: Cart review → Shipping → Payment","Step 1 — Cart: item list with quantity controls, remove option, promo code input, order total breakdown","Step 2 — Shipping: address form (autofill-ready inputs), saved address option, delivery method selector (standard/express)","Step 3 — Payment: card number input with auto-detection (Visa/Mastercard icon appears), expiry, CVV, plus a UPI option","Progress indicator persistent across all 3 steps — also show back navigation on step 2 and 3","Order confirmation screen: success state, order number, estimated delivery, 'Track order' CTA"],tools:["Figma","Meesho/Myntra checkout as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:16,title:"Video streaming app",brief:"Streaming apps live or die on browse experience. Every screen must drive play.",type:"mobile",difficulty:"Advanced",requirements:["Screen 1 — Home: featured hero (full-bleed with overlay text), horizontal content rows (Continue watching, Trending, For you)","Screen 2 — Browse: genre filter chips, a 3-column poster grid — show active genre filter state","Screen 3 — Content detail: poster, title, genre tags, synopsis, cast strip, play button, add to list, similar titles","Screen 4 — Player: full-screen video, overlay controls (play, seek bar, volume, fullscreen, next episode), tap-to-show/hide interaction","Screen 5 — Downloads: downloaded items list — thumbnail, title, episode info, download size, delete option","Consistent dark-theme UI across all 5 screens — this is one of the rare justified dark-mode products"],tools:["Figma","Netflix/Prime Video as reference","Unsplash for content images"],reference:"https://mobbin.com/apps/netflix-ios-e8c0ffa1-b56c-4e14-9fd4-5abb3e6baee2/screens"},{day:17,title:"Banking app overview",brief:"Finance design must earn trust before showing a single number.",type:"mobile",difficulty:"Advanced",requirements:["Design the main account screen: balance (large, the hero), account number (masked), card visual at top","Balance visibility toggle: eye icon to show/hide balance — design both shown and hidden states","Quick actions row: Send, Receive, Pay Bills, Top Up — 4 icons with labels, properly spaced for thumbs","Transaction history: date group headers (Today, Yesterday, Jun 12) with transactions nested under each","Transaction row: merchant logo (colored initials if no logo), merchant name, category tag, amount (credit green / debit default)","Filter bottom sheet: filter by category, date range, amount range — show the open sheet state"],tools:["Figma","Niyo/Jupiter/Fi app as reference","SF Symbols for icons"],reference:"https://mobbin.com/browse/ios/screens"},{day:18,title:"SaaS pricing page",brief:"Pricing pages are conversion design. Every element either builds trust or kills it.",type:"web",difficulty:"Advanced",requirements:["Design a full pricing page at 1440px — monthly/annual toggle at top (annual saves 20%), 3 tiers (Starter, Pro, Enterprise)","Pricing card anatomy: plan name, price, billing cadence, 1-line value prop, CTA, feature list with checkmarks and some crosses","The Pro tier is 'most popular' — make it stand out without being garish — border accent only, no color fill on the whole card","Feature comparison table below the cards: 8 features, 3 columns — use checkmarks, dashes, and text values","FAQ section: 5 questions in an accordion — show one open, four closed","Trust bar: 5 customer logos + '14-day free trial, no credit card required' copy"],tools:["Figma","Vercel/Linear/Loom pricing pages as reference"],reference:"https://land-book.com"},{day:19,title:"Search experience — web",brief:"Search is a product inside a product. Empty state to results, design it all.",type:"web",difficulty:"Advanced",requirements:["Design the full search experience for a design asset marketplace (like Figma Community)","Empty/focused state: search bar expands, shows recent searches and trending queries in a dropdown","Typing state: live autocomplete dropdown — results grouped by type (Files, Teams, Plugins, Users)","Results page: filter sidebar (left), results grid (right) — filters include category, license, rating, file type","Result card: preview image, title, author, rating, download count, a quick-save button on hover","Zero results state: show the query, a helpful message, and 3 suggestions — not just 'no results found'"],tools:["Figma","Figma Community/Creative Market as reference"],reference:"https://dribbble.com/tags/search-ui"},{day:20,title:"Ride-hailing app",brief:"Maps and real-time state. The hardest mobile design category. Do it right.",type:"mobile",difficulty:"Advanced",requirements:["Screen 1 — Home: full-screen map, search bar floating at top, 'Where to?' input, recent destinations chips","Screen 2 — Ride options: map shrinks to top half, ride type list below (Auto, Mini, Sedan, SUV) each with price and ETA","Screen 3 — Confirming: driver matched — driver card (photo, name, rating, car, plate number) + map with driver pin","Screen 4 — Active ride: persistent driver info bar, live map, trip progress, estimated arrival, cancel option with warning","Bottom sheet physics: each screen uses a bottom sheet at different heights — design the snap points thoughtfully","SOS/safety button: it must always be accessible — where does it live across all 4 screens?"],tools:["Figma","Ola/Uber app as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:21,title:"Editorial article page",brief:"Reading design is invisible design. When it works, you only notice the words.",type:"web",difficulty:"Intermediate",requirements:["Design a long-form article page for a tech publication — at both 1440px desktop and 390px mobile","Header: publication logo, minimal nav, article category tag","Article hero: headline, subheadline, author info (avatar, name, date, read time), hero image full-width","Body text layout: 680px max-width content column, line-height 1.7–1.8, pull-quote styled distinctly","In-article components: code block, image with caption, callout/tip box — all must feel native to the article","Related articles section at the bottom: 3 cards — show desktop (3-col) and mobile (stacked) layouts"],tools:["Figma","Vercel Blog/Substack as reference"],reference:"https://land-book.com"},{day:22,title:"Healthcare booking app",brief:"Healthcare design must be the clearest design you've ever made. Zero ambiguity.",type:"mobile",difficulty:"Advanced",requirements:["Screen 1 — Home: upcoming appointment card (doctor, date, time), quick actions (Book, Records, Medicines, Lab), recent activity","Screen 2 — Doctor search: specialty chips, doctor cards (photo, name, rating, next available slot, consult fee)","Screen 3 — Doctor profile: credentials, experience, languages spoken, ratings breakdown, available slots calendar","Screen 4 — Book appointment: date picker, time slot grid, visit type (In-person/Video), reason textarea, confirm CTA","Screen 5 — Confirmation: doctor card, date/time, add to calendar option, pre-appointment checklist","Every screen must have extreme clarity — large touch targets (48px min), high contrast, no decorative complexity"],tools:["Figma","Practo/Apollo 247 as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:23,title:"E-learning platform",brief:"Learning UI must reduce friction. Every extra click is a student who quits.",type:"web",difficulty:"Advanced",requirements:["Web dashboard (1440px): sidebar with course list, main area with active course — video player, lesson list, progress","Course card: thumbnail, title, instructor, progress bar, last accessed date — show at 3 different completion states","Mobile (390px): same dashboard adapted — bottom nav, course list as horizontal scroll, full-screen video player","Lesson list component: sections with nested lessons, completed/active/locked states for each lesson","Quiz question screen (mobile): question text, 4 answer options, progress indicator, time remaining","Certificate screen: the end reward — design something that feels worth sharing on LinkedIn"],tools:["Figma","Coursera/Udemy/Teachable as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:24,title:"Real estate listing app",brief:"Property browsing is visual and emotional. You're designing someone's future home.",type:"mobile",difficulty:"Advanced",requirements:["Home/search screen: map view toggle (map vs list), filter bar, property card list","Property card: photo, price, BHK type, area in sqft, locality, save button — pack this in without feeling cramped","Map view: property pins on a map, selected pin expands to a mini card — design this interaction","Property detail: photo carousel (counter visible), price, key specs row (BHK, sqft, floor, age), about section","Amenities section: icon grid (Gym, Pool, Parking, Security…) — how many fit before you need a 'see all'?","Contact agent: bottom sheet with agent card, call/whatsapp/email options, and a tour booking form"],tools:["Figma","NoBroker/99acres/Housing.com as reference"],reference:"https://mobbin.com/browse/ios/screens"},{day:25,title:"Kanban board — SaaS",brief:"A good kanban feels like thinking. Everything in its place, everything in view.",type:"web",difficulty:"Expert",requirements:["Design a full-width kanban board (1440px) for a product team — columns: Backlog, To Do, In Progress, In Review, Done","Task card: title, assignee avatar(s), priority dot, due date, label tag, comment count, attachment count","Card states: default, hovered (add button appears), dragging (card lifts, semi-transparent, drop zone highlighted)","Column header: name, task count badge, add card button, column options menu (kebab)","Add card inline form: appears as the top card in a column — title input, quick-assign, save/cancel","Swimlane toggle: show how the board looks when grouped by Epic (a second hierarchy level)"],tools:["Figma","Linear/Jira/Height app as reference"],reference:"https://dribbble.com/tags/kanban"},{day:26,title:"Fintech portfolio dashboard",brief:"Financial dashboards must communicate truth clearly. No decoration that hides data.",type:"web",difficulty:"Expert",requirements:["Design a full web dashboard (1440px) for a personal investment portfolio tracker","Hero row: 4 metrics — total portfolio value, today's P&L (with up/down indicator), XIRR, allocated vs available cash","Holdings table: asset name + ticker, current price, qty, avg buy price, current value, total P&L (%), 1D change — sortable","Chart section: portfolio value over time (line chart) with 1W/1M/3M/1Y/All toggle — show the chart and toggle states","Asset allocation: donut chart — Equity, Debt, Gold, Cash — with percentages and a legend","Transaction history drawer: slides in from the right — date, type (Buy/Sell), asset, qty, price, total amount"],tools:["Figma","Zerodha Kite/Groww/INDmoney as reference"],reference:"https://dribbble.com/tags/finance-dashboard"},{day:27,title:"Social app — 6 screens",brief:"Social products are the hardest design. You're designing human connection.",type:"mobile",difficulty:"Expert",requirements:["Screen 1 — Feed: posts from people you follow — photo post with caption, like/comment/share/save row, story bar at top","Screen 2 — Explore: search bar, trending tags, a mixed grid (some large, some small) of content — not uniform","Screen 3 — Create post: camera viewfinder, capture button, gallery thumbnail strip, flash/flip controls","Screen 4 — Post detail: the post large, full comment thread below, comment input pinned at bottom, nested replies","Screen 5 — Notifications: grouped (New followers, Likes, Comments, Mentions) with time-relative stamps","Screen 6 — DMs list: conversation list — avatar, name, last message preview, timestamp, unread count badge","All 6 screens must feel unmistakably from the same product"],tools:["Figma","Instagram/Threads as reference","Unsplash"],reference:"https://mobbin.com/apps/instagram-ios-88f09ddb-7c79-4c44-8bf1-5c1c66e68e96/screens"},{day:28,title:"SaaS analytics dashboard",brief:"Day 28. Everything you've learned. Build the most complete screen of your life.",type:"web",difficulty:"Expert",requirements:["Design a full analytics dashboard (1440px) for a SaaS company — this is their command center","Top row: MRR, ARR, Active Users, Churn Rate, NPS — 5 stat cards with trend arrows and sparklines","Revenue chart: MRR over 12 months as an area chart, with a target line — toggle between MRR/ARR/New MRR/Churned MRR","Cohort retention table: months as columns, cohorts as rows — color-coded cells (dark = high retention, light = low)","Top customers table: company logo, name, plan, MRR, health score (red/yellow/green dot), last active — clickable rows","Geographic section: bubble map showing user distribution — top 5 countries labeled with user count","Customer detail drawer: slides in from the right when a row is clicked — MRR, plan, usage, contact info, activity log","This is your portfolio capstone. It should be so complete that someone asks if it's a real product"],tools:["Figma","Baremetrics/ChartMogul/Mixpanel as reference","Figma Community for chart components"],reference:"https://dribbble.com/tags/analytics-dashboard"}];
+
+const WEEK_LABELS=["Week 1 — Single Screens","Week 2 — Components & Flows","Week 3 — Multi-screen Products","Week 4 — Complex Products"];
+const MILESTONE_MSG={7:"Week 1 complete! You can design a screen. Week 2 unlocked. 🔥",14:"Halfway! You think in flows now. Week 3 unlocked. 🚀",21:"Week 3 done. You design full products. Week 4 unlocked. 💎"};
+const HOUR_MS=24*60*60*1000;
+const COLORS=['#6C63FF','#FF6584','#43CFCA','#FFD166','#06D6A0','#EF476F','#FFC8DD','#B5E48C'];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let STATE={};
+let currentDay=null;
+let activeWeek=0;
+let taskTimerInterval=null;
+let homeTimerInterval=null;
+
+function loadState(){
+  try{
+    STATE={
+      completed:JSON.parse(localStorage.getItem('craft28_completed')||'[]'),
+      streak:parseInt(localStorage.getItem('craft28_streak')||'0'),
+      lastDate:localStorage.getItem('craft28_last_date')||null,
+      startTime:localStorage.getItem('craft28_start_time')||null,
+      completeTimes:JSON.parse(localStorage.getItem('craft28_complete_times')||'{}'),
+      started:localStorage.getItem('craft28_started')==='true'
+    };
+  }catch(e){
+    STATE={completed:[],streak:0,lastDate:null,startTime:null,completeTimes:{},started:false};
+  }
+}
+
+function saveState(){
+  localStorage.setItem('craft28_completed',JSON.stringify(STATE.completed));
+  localStorage.setItem('craft28_streak',String(STATE.streak));
+  localStorage.setItem('craft28_complete_times',JSON.stringify(STATE.completeTimes));
+  localStorage.setItem('craft28_started','true');
+  if(STATE.lastDate)localStorage.setItem('craft28_last_date',STATE.lastDate);
+  if(STATE.startTime)localStorage.setItem('craft28_start_time',STATE.startTime);
+}
+
+// ── UNLOCK LOGIC ──────────────────────────────────────────────────────
+function getUnlockTime(day){
+  if(day===1)return STATE.startTime?parseInt(STATE.startTime):null;
+  const prev=STATE.completeTimes[day-1];
+  return prev?parseInt(prev)+HOUR_MS:null;
+}
+function isUnlocked(day){
+  if(!STATE.started)return false;
+  if(day===1)return true;
+  if(!STATE.completed.includes(day-1))return false;
+  const t=getUnlockTime(day);
+  return t?Date.now()>=t:false;
+}
+function isWaiting(day){
+  if(day===1||STATE.completed.includes(day))return false;
+  if(!STATE.completed.includes(day-1))return false;
+  const t=getUnlockTime(day);
+  return t?Date.now()<t:false;
+}
+function formatTime(ms){
+  if(ms<=0)return'Ready!';
+  const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+  if(h>0)return h+'h '+m+'m';
+  if(m>0)return m+'m '+s+'s';
+  return s+'s';
+}
+
+// ── STREAK ────────────────────────────────────────────────────────────
+function updateStreak(){
+  const today=new Date().toDateString();
+  if(!STATE.lastDate){STATE.streak=1;STATE.lastDate=today;return;}
+  if(STATE.lastDate===today)return;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  STATE.streak=STATE.lastDate===yesterday?STATE.streak+1:1;
+  STATE.lastDate=today;
+}
+
+// ── CONFETTI ──────────────────────────────────────────────────────────
+function launchConfetti(full){
+  const count=full?90:22;
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='confetti-piece';
+      const size=(Math.random()*6+5)+'px';
+      el.style.cssText=`left:${Math.random()*100}vw;width:${size};height:${size};background:${COLORS[Math.floor(Math.random()*COLORS.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${Math.random()*2+1}s;animation-delay:${Math.random()*0.4}s;transform:rotate(${Math.random()*360}deg)`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),3500);
+    },i*(full?25:45));
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg,dur=4500){
+  document.querySelector('.toast')?.remove();
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.classList.add('hiding');setTimeout(()=>t.remove(),320);},dur);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+function init(){
+  loadState();
+  if(!STATE.started){
+    document.getElementById('onboard').style.display='flex';
+    return;
+  }
+  document.getElementById('onboard').style.display='none';
+  document.getElementById('app').style.display='block';
+  activeWeek=Math.min(Math.floor(STATE.completed.length/7),3);
+  renderHome();
+}
+
+function startJourney(){
+  STATE.startTime=String(Date.now());
+  STATE.started=true;
+  saveState();
+  document.getElementById('onboard').style.display='none';
+  document.getElementById('app').style.display='block';
+  activeWeek=0;
+  renderHome();
+}
+
+// ── HOME ──────────────────────────────────────────────────────────────
+function renderHome(){
+  clearInterval(taskTimerInterval);
+  document.getElementById('home-screen').style.display='block';
+  document.getElementById('task-screen').style.display='none';
+  window.scrollTo(0,0);
+
+  const done=STATE.completed.length;
+  document.getElementById('days-done').textContent=done;
+  document.getElementById('progress-fill').style.width=Math.round(done/28*100)+'%';
+  document.getElementById('streak-count').textContent=STATE.streak;
+  document.getElementById('level-label').textContent=WEEK_LABELS[Math.min(Math.floor(done/7),3)];
+
+  // Week tabs
+  const weekReqs=[null,7,14,21];
+  const tabsEl=document.getElementById('week-tabs');
+  tabsEl.innerHTML=['Week 1','Week 2','Week 3','Week 4'].map((w,i)=>{
+    const locked=weekReqs[i]!==null&&!STATE.completed.includes(weekReqs[i]);
+    return`<button class="week-tab${activeWeek===i?' active':''}${locked?' locked':''}" onclick="${locked?'':'switchWeek('+i+')'}" title="${locked?'Complete previous week to unlock':w}">${w}${locked?'<span style="font-size:9px">🔒</span>':''}</button>`;
+  }).join('');
+
+  document.getElementById('week-range-label').textContent=`Days ${activeWeek*7+1}–${activeWeek*7+7}`;
+  renderGrid();
+  startHomeTimers();
+}
+
+function renderGrid(){
+  const grid=document.getElementById('day-grid');
+  const days=TASKS.slice(activeWeek*7,activeWeek*7+7);
+  grid.innerHTML=days.map(t=>{
+    const done=STATE.completed.includes(t.day);
+    const unlocked=isUnlocked(t.day);
+    const waiting=isWaiting(t.day);
+    if(done){
+      return`<button class="day-card completed" onclick="openTask(${t.day})" title="${t.title}"><span class="day-num">${t.day}</span><span style="font-size:13px">✓</span></button>`;
+    }else if(waiting){
+      const left=Math.max(0,getUnlockTime(t.day)-Date.now());
+      return`<div class="day-card waiting" title="Unlocks in ${formatTime(left)}"><span class="day-num">${t.day}</span><span class="day-timer" id="ht-${t.day}">${formatTime(left)}</span></div>`;
+    }else if(unlocked){
+      return`<button class="day-card active-day" onclick="openTask(${t.day})" title="${t.title}"><span class="day-num">${t.day}</span></button>`;
+    }else{
+      return`<div class="day-card locked" title="Locked"><span class="day-num" style="color:#ccc">${t.day}</span><span style="font-size:10px">🔒</span></div>`;
+    }
+  }).join('');
+}
+
+function startHomeTimers(){
+  clearInterval(homeTimerInterval);
+  homeTimerInterval=setInterval(()=>{
+    let needsRerender=false;
+    TASKS.forEach(t=>{
+      if(isWaiting(t.day)){
+        const el=document.getElementById('ht-'+t.day);
+        if(el){
+          const left=Math.max(0,getUnlockTime(t.day)-Date.now());
+          if(left===0){needsRerender=true;}
+          else{el.textContent=formatTime(left);}
+        }
+      }
+    });
+    if(needsRerender)renderGrid();
+  },1000);
+}
+
+function switchWeek(i){activeWeek=i;renderHome();}
+
+// ── TASK ──────────────────────────────────────────────────────────────
+function openTask(day){
+  clearInterval(homeTimerInterval);
+  currentDay=day;
+  const t=TASKS[day-1];
+  document.getElementById('home-screen').style.display='none';
+  document.getElementById('task-screen').style.display='block';
+  window.scrollTo(0,0);
+
+  document.getElementById('task-day-badge').textContent=`Day ${day} of 28`;
+  document.getElementById('task-title').textContent=t.title;
+  document.getElementById('task-brief').textContent=t.brief;
+  document.getElementById('ref-link').href=t.reference;
+
+  // Tags
+  document.getElementById('task-tags').innerHTML=
+    `<span class="tag tag-${t.type}">${t.type==='mobile'?'📱 Mobile':'🖥 Web'}</span>`+
+    `<span class="tag tag-${t.difficulty}">${t.difficulty}</span>`;
+
+  // Requirements
+  document.getElementById('req-list').innerHTML=t.requirements.map((r,i)=>
+    `<li class="req-item"><span class="req-num">${i+1}</span><span class="req-text">${r}</span></li>`
+  ).join('');
+
+  // Tools
+  document.getElementById('tool-chips').innerHTML=t.tools.map(tool=>
+    `<span class="tool-chip">${tool}</span>`
+  ).join('');
+
+  updateTaskBottom();
+}
+
+function updateTaskBottom(){
+  const day=currentDay;
+  const done=STATE.completed.includes(day);
+  const waiting=isWaiting(day);
+  const unlocked=isUnlocked(day);
+  const btn=document.getElementById('complete-btn');
+  const portfolio=document.getElementById('portfolio-card');
+  const timerCard=document.getElementById('timer-card');
+
+  clearInterval(taskTimerInterval);
+  timerCard.style.display='none';
+  portfolio.style.display='none';
+
+  if(done){
+    btn.textContent='Completed ✓';
+    btn.className='complete-btn done';
+    btn.onclick=null;
+    portfolio.style.display='block';
+  }else if(waiting){
+    btn.className='waiting-btn';
+    btn.textContent='Come back tomorrow to unlock this task ⏱';
+    btn.onclick=null;
+    timerCard.style.display='flex';
+    taskTimerInterval=setInterval(()=>{
+      const left=Math.max(0,getUnlockTime(day)-Date.now());
+      document.getElementById('task-timer-count').textContent=formatTime(left);
+      if(left===0){clearInterval(taskTimerInterval);updateTaskBottom();}
+    },1000);
+    const left=Math.max(0,getUnlockTime(day)-Date.now());
+    document.getElementById('task-timer-count').textContent=formatTime(left);
+  }else if(unlocked){
+    btn.textContent='Mark as complete ✓';
+    btn.className='complete-btn';
+    btn.onclick=completeCurrentDay;
+  }
+}
+
+function showHome(){
+  clearInterval(taskTimerInterval);
+  currentDay=null;
+  renderHome();
+}
+
+// ── COMPLETE ──────────────────────────────────────────────────────────
+function completeCurrentDay(){
+  const day=currentDay;
+  if(!day||STATE.completed.includes(day))return;
+
+  STATE.completed.push(day);
+  STATE.completeTimes[day]=String(Date.now());
+  updateStreak();
+  saveState();
+
+  launchConfetti(day===28);
+
+  if(day===28){
+    document.getElementById('task-screen').style.display='none';
+    document.getElementById('home-screen').style.display='none';
+    document.getElementById('celebration').style.display='flex';
+    setTimeout(()=>launchConfetti(true),1800);
+    return;
+  }
+
+  const msg=MILESTONE_MSG[day]||`Day ${day} done! Upload to Dribbble or Behance to build your portfolio. 🎨`;
+  showToast(msg);
+
+  const nextDay=day+1;
+  setTimeout(()=>{
+    if(nextDay<=28){openTask(nextDay);}
+    else{showHome();}
+  },900);
+}
+
+// ── CELEBRATION ───────────────────────────────────────────────────────
+function shareOnTwitter(){
+  const txt=encodeURIComponent("Just finished the #Craft28 challenge — 28 days of real UI/UX design tasks from a login screen to a full SaaS dashboard. Check it out: craft28.vercel.app");
+  window.open('https://twitter.com/intent/tweet?text='+txt,'_blank');
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
